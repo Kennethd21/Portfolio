@@ -88,7 +88,6 @@ document.querySelectorAll('.skill-switch').forEach((switcher) => {
   });
 });
 
-<<<<<<< HEAD
 // 3D Coverflow Carousel for Projects Bay
 function initProjectCoverflow() {
   const frame = document.getElementById('coverflow-frame');
@@ -303,24 +302,6 @@ function initProjectCoverflow() {
 
 initProjectCoverflow();
 
-=======
-// Project filters
-const projectArchive = document.querySelector('.project-archive');
-if (projectArchive) {
-  const projectCards = [...projectArchive.querySelectorAll('.project-card')];
-  projectArchive.classList.toggle('is-odd', projectCards.length % 2 === 1);
-  document.querySelectorAll('.project-filter').forEach((filter) => {
-    filter.addEventListener('click', () => {
-      const category = filter.dataset.filter;
-      document.querySelectorAll('.project-filter').forEach((item) => item.classList.toggle('is-active', item === filter));
-      projectCards.forEach((card) => {
-        card.hidden = category !== 'all' && card.dataset.category !== category;
-      });
-    });
-  });
-}
-
->>>>>>> cdc3f4b748f8fe5a26b205fdad61a96f2034edf6
 // Custom Cat Cursor
 const catCursor = document.querySelector('.cat-cursor');
 if (catCursor) {
