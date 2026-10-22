@@ -88,21 +88,219 @@ document.querySelectorAll('.skill-switch').forEach((switcher) => {
   });
 });
 
-// Project filters
-const projectArchive = document.querySelector('.project-archive');
-if (projectArchive) {
-  const projectCards = [...projectArchive.querySelectorAll('.project-card')];
-  projectArchive.classList.toggle('is-odd', projectCards.length % 2 === 1);
-  document.querySelectorAll('.project-filter').forEach((filter) => {
-    filter.addEventListener('click', () => {
-      const category = filter.dataset.filter;
-      document.querySelectorAll('.project-filter').forEach((item) => item.classList.toggle('is-active', item === filter));
-      projectCards.forEach((card) => {
-        card.hidden = category !== 'all' && card.dataset.category !== category;
+// 3D Coverflow Carousel for Projects Bay
+function initProjectCoverflow() {
+  const frame = document.getElementById('coverflow-frame');
+  const track = document.querySelector('.coverflow-track');
+  if (!frame || !track) return;
+
+  const allCards = [...track.querySelectorAll('.project-card')];
+  const prevBtn = document.querySelector('.coverflow-nav--prev');
+  const nextBtn = document.querySelector('.coverflow-nav--next');
+  const pagination = document.getElementById('coverflow-pagination');
+  const filterButtons = document.querySelectorAll('.project-filter');
+
+  let activeCards = [...allCards];
+  let count = activeCards.length;
+  let pos = 0;
+  let target = 0;
+  let cardWidth = 0;
+  let rafId = null;
+  let dragData = null;
+
+  const rotate = 38;
+  const depth = 0.55;
+  const falloff = 0.56;
+  const fade = 0.12;
+  const gap = 0.08;
+
+  function indexAt(p) {
+    if (count === 0) return 0;
+    return ((Math.round(p) % count) + count) % count;
+  }
+
+  function paint() {
+    if (!cardWidth || count === 0) return;
+    const pitch = cardWidth * (1 + gap);
+
+    activeCards.forEach((card, index) => {
+      let offset = index - pos;
+      if (count > 1) {
+        offset = ((offset % count) + count) % count;
+        if (offset > count / 2) offset -= count;
+      }
+
+      const distance = Math.abs(offset);
+      const ramp = Math.pow(distance, falloff);
+      const tilt = Math.min(rotate * ramp, 80) * Math.sign(offset);
+
+      card.style.transform = `translateX(calc(-50% + ${offset * pitch}px)) translateZ(${-depth * cardWidth * ramp}px) rotateY(${-tilt}deg)`;
+      const edge = count > 1 ? Math.min(1, Math.max(0, count / 2 - distance)) : 1;
+      card.style.opacity = Math.max(0, 1 - fade * distance) * edge;
+      card.style.zIndex = String(Math.round(100 - distance * 2));
+      card.setAttribute('aria-hidden', String(distance > 2.5));
+    });
+
+    const activeIdx = indexAt(pos);
+    if (pagination) {
+      pagination.querySelectorAll('.coverflow-dot').forEach((dot, idx) => {
+        dot.classList.toggle('is-active', idx === activeIdx);
       });
+    }
+  }
+
+  function settle(t) {
+    if (rafId) cancelAnimationFrame(rafId);
+    target = t;
+
+    function step() {
+      const remaining = target - pos;
+      if (Math.abs(remaining) < 0.0004) {
+        pos = target;
+        paint();
+        rafId = null;
+        return;
+      }
+      pos += remaining * 0.16;
+      paint();
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  function goTo(index) {
+    if (count <= 1) return;
+    const nextTarget = index + Math.round((target - index) / count) * count;
+    settle(nextTarget);
+  }
+
+  function nudge(by) {
+    if (count <= 1) return;
+    settle(Math.round(target) + by);
+  }
+
+  function updateCardsForFilter(category) {
+    allCards.forEach((card) => {
+      const match = category === 'all' || card.dataset.category === category;
+      card.hidden = !match;
+      card.style.display = match ? '' : 'none';
+      if (!match) {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.8)';
+      }
+    });
+
+    activeCards = allCards.filter((card) => !card.hidden);
+    count = activeCards.length;
+    pos = 0;
+    target = 0;
+    buildPagination();
+    measure();
+  }
+
+  function buildPagination() {
+    if (!pagination) return;
+    pagination.innerHTML = '';
+    activeCards.forEach((_, idx) => {
+      const dot = document.createElement('button');
+      dot.className = `coverflow-dot ${idx === 0 ? 'is-active' : ''}`;
+      dot.setAttribute('aria-label', `Go to project ${idx + 1}`);
+      dot.type = 'button';
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        goTo(idx);
+      });
+      pagination.appendChild(dot);
+    });
+  }
+
+  allCards.forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      const activeIndex = activeCards.indexOf(card);
+      if (activeIndex !== -1) goTo(activeIndex);
     });
   });
+
+  filterButtons.forEach((filter) => {
+    filter.addEventListener('click', () => {
+      filterButtons.forEach((btn) => btn.classList.toggle('is-active', btn === filter));
+      updateCardsForFilter(filter.dataset.filter);
+    });
+  });
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nudge(-1);
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nudge(1);
+    });
+  }
+
+  frame.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); nudge(1); }
+  });
+
+  frame.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('a, button')) return;
+    if (rafId) cancelAnimationFrame(rafId);
+    try { frame.setPointerCapture(e.pointerId); } catch (_) {}
+    dragData = { id: e.pointerId, x: e.clientX, pos, v: 0, t: performance.now() };
+  });
+
+  frame.addEventListener('pointermove', (e) => {
+    if (!dragData || dragData.id !== e.pointerId) return;
+    const pitch = cardWidth * (1 + gap);
+    if (!pitch) return;
+    const now = performance.now();
+    const prevPos = pos;
+    pos = dragData.pos - (e.clientX - dragData.x) / pitch;
+    dragData.v = ((pos - prevPos) / Math.max(now - dragData.t, 1)) * 1000;
+    dragData.t = now;
+    paint();
+  });
+
+  const endDrag = (e) => {
+    if (!dragData || dragData.id !== e.pointerId) return;
+    const carried = Math.max(-2, Math.min(2, dragData.v * 0.18));
+    settle(Math.round(pos + carried));
+    dragData = null;
+    try { frame.releasePointerCapture(e.pointerId); } catch (_) {}
+  };
+
+  frame.addEventListener('pointerup', endDrag);
+  frame.addEventListener('pointercancel', endDrag);
+
+  function measure() {
+    const sampleCard = activeCards[0] || allCards[0];
+    if (sampleCard && sampleCard.offsetWidth > 0) {
+      cardWidth = sampleCard.offsetWidth;
+    } else if (frame.offsetWidth > 0) {
+      cardWidth = Math.min(460, Math.max(280, frame.offsetWidth * 0.34));
+    }
+    if (cardWidth > 0) {
+      paint();
+    }
+  }
+
+  buildPagination();
+  const observer = new ResizeObserver(measure);
+  observer.observe(frame);
+  measure();
+
+  requestAnimationFrame(() => {
+    measure();
+  });
+  window.addEventListener('load', measure);
 }
+
+initProjectCoverflow();
 
 // Custom Cat Cursor
 const catCursor = document.querySelector('.cat-cursor');

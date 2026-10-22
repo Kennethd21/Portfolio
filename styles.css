@@ -517,7 +517,140 @@ button { color: inherit; }
 .project-card__footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 15px; color: var(--paper-muted); font-size: 8px; line-height: 1.4; }
 .project-card__footer a { color: var(--orange-bright); text-decoration: none; white-space: nowrap; transition: color .2s; }
 .project-card__footer a:hover, .project-card__footer a:focus-visible { text-decoration: underline; color: #fff; }
-.project-card[hidden] { display: none; }
+.project-card[hidden] { display: none !important; }
+
+/* =========================================================
+   3D COVERFLOW CAROUSEL (PROJECTS SECTION)
+   ========================================================= */
+.coverflow-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 18px auto 0;
+  --cf-card: clamp(300px, 34vw, 460px);
+  opacity: 0;
+  transform: translateY(28px);
+  transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .7s ease;
+  will-change: transform, opacity;
+}
+.coverflow-wrapper.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.coverflow-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 40px 0 50px;
+  perspective: calc(var(--cf-card) * 2.8);
+  touch-action: pan-y;
+  cursor: grab;
+  outline: none;
+}
+
+.coverflow-frame:active {
+  cursor: grabbing;
+}
+
+.coverflow-track {
+  position: relative;
+  width: 100%;
+  height: clamp(540px, 62vh, 640px);
+  transform-style: preserve-3d;
+}
+
+/* Position each project card in 3D space */
+.coverflow-track .project-card {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--cf-card);
+  margin-left: 0;
+  cursor: pointer;
+  user-select: none;
+  opacity: 1;
+  transform-origin: center center;
+  transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+  will-change: transform, opacity;
+}
+
+.coverflow-track .project-card:hover {
+  border-color: var(--orange-bright);
+}
+
+/* Navigation buttons */
+.coverflow-nav {
+  position: absolute;
+  top: 48%;
+  z-index: 150;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(238, 232, 220, 0.2);
+  background: rgba(18, 25, 23, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.coverflow-nav:hover,
+.coverflow-nav:focus-visible {
+  border-color: var(--orange-bright);
+  color: var(--orange-bright);
+  background: rgba(25, 34, 30, 0.95);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.coverflow-nav--prev { left: 8px; }
+.coverflow-nav--next { right: 8px; }
+
+/* Pagination indicator dots */
+.coverflow-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.coverflow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(238, 232, 220, 0.25);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: width .3s cubic-bezier(.2,.8,.2,1), background .3s ease, border-radius .3s ease, box-shadow .3s ease;
+}
+
+.coverflow-dot:hover {
+  background: rgba(238, 232, 220, 0.6);
+}
+
+.coverflow-dot.is-active {
+  width: 26px;
+  border-radius: 4px;
+  background: var(--orange-bright);
+  box-shadow: 0 0 12px rgba(255, 135, 84, 0.6);
+}
+
+@media (max-width: 768px) {
+  .coverflow-wrapper {
+    --cf-card: clamp(260px, 82vw, 360px);
+  }
+  .coverflow-track {
+    height: 560px;
+  }
+  .coverflow-nav--prev { left: 2px; }
+  .coverflow-nav--next { right: 2px; }
+}
+
 
 .experience-section { width: min(1180px, calc(100% - 72px)); margin: 0 auto; padding: 105px 0 150px; }
 .experience-section__marker { display: flex; align-items: center; gap: 13px; color: var(--orange-bright); font: 10px var(--mono); letter-spacing: .15em; margin-bottom: 22px; }
@@ -651,6 +784,7 @@ button { color: inherit; }
   transform: translateY(20px);
   transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s;
 }
+.coverflow-wrapper.is-revealed .project-card,
 .project-archive.is-revealed .project-card,
 .capability-rack.is-revealed .capability-module,
 .experience-timeline.is-revealed .experience-entry {
