@@ -517,6 +517,7 @@ button { color: inherit; }
 .project-card__footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 15px; color: var(--paper-muted); font-size: 8px; line-height: 1.4; }
 .project-card__footer a { color: var(--orange-bright); text-decoration: none; white-space: nowrap; transition: color .2s; }
 .project-card__footer a:hover, .project-card__footer a:focus-visible { text-decoration: underline; color: #fff; }
+<<<<<<< HEAD
 .project-card[hidden] { display: none !important; }
 
 /* =========================================================
@@ -651,6 +652,9 @@ button { color: inherit; }
   .coverflow-nav--next { right: 2px; }
 }
 
+=======
+.project-card[hidden] { display: none; }
+>>>>>>> cdc3f4b748f8fe5a26b205fdad61a96f2034edf6
 
 .experience-section { width: min(1180px, calc(100% - 72px)); margin: 0 auto; padding: 105px 0 150px; }
 .experience-section__marker { display: flex; align-items: center; gap: 13px; color: var(--orange-bright); font: 10px var(--mono); letter-spacing: .15em; margin-bottom: 22px; }
@@ -784,7 +788,10 @@ button { color: inherit; }
   transform: translateY(20px);
   transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s;
 }
+<<<<<<< HEAD
 .coverflow-wrapper.is-revealed .project-card,
+=======
+>>>>>>> cdc3f4b748f8fe5a26b205fdad61a96f2034edf6
 .project-archive.is-revealed .project-card,
 .capability-rack.is-revealed .capability-module,
 .experience-timeline.is-revealed .experience-entry {
